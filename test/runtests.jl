@@ -2,4 +2,4 @@ using Quats
 using Base.Test
 
 # write your own tests here
-@test 1 == 2
+include("quaternion-test.jl")

@@ -1,5 +1,7 @@
+__precompile__()
+
 module Quats
 
-# package code goes here
+include("quaternion.jl")
 
 end # module
