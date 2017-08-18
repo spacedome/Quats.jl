@@ -1,15 +1,34 @@
 
 @testset "quat basic tests" begin
 
-    @testset "type conversion" for T in (Int64, Float64)
+    @testset "type conversion" for T in (Int32, Int64, Float32, Float64)
         @test real(quat(T)) == T
         @test complex(quat(T)) == complex(T)
-        @test real(quat(1.0)) == 1.0
-        @test real(quat(1.0+2.0im)) == 1.0
-        @test imag(quat(1.0+2.0im)) == 2.0
-        @test jmag(1.0+2.0im+3.0jm+4.0km) == 3.0
-        @test kmag(1.0+2.0im+3.0jm+4.0km) == 4.0
     end
+
+    @test real(quat(1.0)) == 1.0
+    @test real(quat(1.0+2.0im)) == 1.0
+    @test imag(quat(1.0+2.0im)) == 2.0
+    @test jmag(1.0+2.0im+3.0jm+4.0km) == 3.0
+    @test kmag(1.0+2.0im+3.0jm+4.0km) == 4.0
+    @test quat(vec([0.0 2.0 3.0 4.0])) == 2im + 3jm + 4km
+    @test isinteger(quat(1,0,0,0))
+    @test !isinteger(quat(1.1, 0.0, 0.0, 0.0))
+    @test !isinteger(jm)
+    @test isfinite(quat(1.0, 10.0, 100.0, 1000.0))
+    @test !isfinite(quat(1.0, Inf, Inf, Inf))
+    @test isnan(quat(NaN, NaN, NaN, NaN))
+    @test !isnan(1 + im + jm + km)
+    @test isinf(quat(1.0, Inf, Inf, Inf))
+    @test !isinf(quat(1.0, 10.0, 100.0, 1000.0))
+    @test iszero(quat(0.0, 0.0, 0.0, 0.0))
+    @test iszero(quat(0, 0, 0, 0))
+    @test !iszero(im + jm + km)
+    @test quat(jm+km) == jm+km
+    @test complex(1+im+jm+km) == 1+im
+    @test vec(1+2im+3jm+4km) == [1; 2; 3; 4]
+
+    @test conj(1+2im+3jm+4km) == 1-2im-3jm-4km
 
     @test quat(false,true,false,false) == im
     @test quat(false,false,true,false) == jm
@@ -57,11 +76,14 @@ end
             @test isequal(T(-1.0) + im + jm + km, quat(T(-1.0),T(+1.0),T(+1.0),T(+1.0)))
             @test isequal(T(+1.0) - im - jm - km, quat(T(+1.0),T(-1.0),T(-1.0),T(-1.0)))
             @test isequal(T(-1.0) - im - jm - km, quat(T(-1.0),T(-1.0),T(-1.0),T(-1.0)))
-            @test isequal(im + jm + km + T(+0.0), quat(T(+0.0),T(+1.0),T(+1.0),T(+1.0)))
-            # Fix these, sign issues with zeros, something wrong with type promotion?
-            # @test isequal(im + jm + km + T(-0.0), quat(T(-0.0),T(+1.0),T(+1.0),T(+1.0)))
-            # @test isequal(im + jm + km - T(+0.0), quat(T(-0.0),T(+1.0),T(+1.0),T(+1.0)))
-            # @test isequal(im + jm + km - T(-0.0), quat(T(-0.0),T(+1.0),T(+1.0),T(+1.0)))
+            @test isequal(jm + T(+0.0), quat(T(+0.0),T(+0.0),T(+1.0),T(+0.0)))
+            @test isequal(jm + T(-0.0), quat(T(-0.0),T(+0.0),T(+1.0),T(+0.0)))
+            @test isequal(jm - T(+0.0), quat(T(+0.0),T(+0.0),T(+1.0),T(+0.0)))
+            @test isequal(jm - T(-0.0), quat(T(+0.0),T(+0.0),T(+1.0),T(+0.0)))
+            @test isequal(km + T(+0.0), quat(T(+0.0),T(+0.0),T(+0.0),T(+1.0)))
+            @test isequal(km + T(-0.0), quat(T(-0.0),T(+0.0),T(+0.0),T(+1.0)))
+            @test isequal(km - T(+0.0), quat(T(+0.0),T(+0.0),T(+0.0),T(+1.0)))
+            @test isequal(km - T(-0.0), quat(T(+0.0),T(+0.0),T(+0.0),T(+1.0)))
             @test isequal(im + jm + km + T(+1.0), quat(T(+1.0),T(+1.0),T(+1.0),T(+1.0)))
             @test isequal(im + jm + km + T(-1.0), quat(T(-1.0),T(+1.0),T(+1.0),T(+1.0)))
             @test isequal(im + jm + km - T(+1.0), quat(T(-1.0),T(+1.0),T(+1.0),T(+1.0)))
@@ -114,5 +136,13 @@ end
 
 # @testset "exp(q)" begin
     
+
+@testset "Matrix tests" begin
+    
+    Q = [1+2im+3jm+4jm -im+km; -jm+km -5+6im-7jm-8km]
+
+    @test qmatrix(cmatrix(1+2im+3jm+4km))[1,1] == 1+2im+3jm+4km
+    @test qmatrix(cmatrix(Q)) == Q
+end
     
 # end

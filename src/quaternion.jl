@@ -1,6 +1,6 @@
 importall Base
 
-export Quaternion, quat, jm, km, Quaternion128, Quaternion256, Quat128, Quat256, jmag, kmag
+export Quaternion, quat, jm, km, Quaternion128, Quaternion256, Quat128, Quat256, jmag, kmag, cmatrix, qmatrix
 
 """
     Quaternion{T<:Real} <: Number
@@ -18,7 +18,7 @@ end
 Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
 Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)) )
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
-Quaternion(v::Vector) = Quaternion(v[1], v[2], v[3], v[4])
+Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4])
 
 """
     jm
@@ -96,6 +96,7 @@ quat(q::Quaternion) = q
 quat(x::Real) = Quaternion(x)
 quat(z::Complex) = Quaternion(z)
 quat(a::Real, b::Real, c::Real, d::Real) = Quaternion(a, b, c, d)
+quat(v::Vector{<:Real}) = Quaternion(v)
 
 complex(::Type{Quaternion{T}}) where {T<:Real} = Complex{T}
 complex(q::Quaternion) = complex(q.re, q.im)
@@ -301,16 +302,33 @@ float(q::Quaternion) = Quaternion(float(q.re), float(q.im), float(q.jm), float(q
 big(q::Quaternion{<:AbstractFloat}) = Quaternion{BigFloat}(q)
 big(q::Quaternion{<:Integer}) = Quaternion{BigInt}(q)
 
+
+## Matrix representations of Quaternions
+
+function cmatrix(q::Quaternion)
+    [complex( q.re, q.im) complex(q.jm,  q.km);
+     complex(-q.jm, q.km) complex(q.re, -q.im)] 
+end
+
+function cmatrix(Q::Matrix{Quaternion{T}}) where {T}
+    W = zeros(Complex{T}, 2 .* size(Q))
+    for i=1:size(Q, 1), j=1:size(Q, 2)
+        W[2i-1:2i, 2j-1:2j] = cmatrix(Q[i, j])
+    end
+    W
+end
+
+function qmatrix(C::Matrix{Complex{T}}) where {T}
+    Q = zeros(Quaternion{T}, Integer.(size(C)./2))
+    for i=1:size(Q, 1), j=1:size(Q, 2)
+        Q[i,j] = real(C[2i-1, 2j-1]) + imag(C[2i-1, 2j-1])*im + real(C[2i-1, 2j])*jm + imag(C[2i-1, 2j])*km
+    end
+    Q
+end
+
 ## Array operations on complex numbers ##
 
 quat(A::AbstractArray{<:Quaternion}) = A
-
-function quat(A::AbstractArray{T}) where T
-    if !isleaftype(T)
-        error("`quat` not defined on abstractly-typed arrays; please convert to a more specific type")
-    end
-    convert(AbstractArray{typeof(quat(zero(T)))}, A)
-end
 
 
 _default_type(T::Type{Quaternion}) = Quaternion{Float}
