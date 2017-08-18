@@ -6,6 +6,14 @@
         @test complex(quat(T)) == complex(T)
     end
 
+    @test sprint(show, 1 + 2im + 3jm + 4km) == "1 + 2im + 3jm + 4km"
+    @test sprint(showcompact, -1.0-2.0im-3.0jm-4.0km) == "-1.0-2.0im-3.0jm-4.0km"
+    @test sprint(show, NaN + NaN*im + NaN*jm + NaN*km) == "NaN + NaN*im + NaN*jm + NaN*km"
+    @test sprint(show, quat(im)) == "im"
+    @test sprint(show, jm) == "jm"
+    @test sprint(show, km) == "km"
+    @test sprint(show, Quaternion(true,true,true,true)) == "Quaternion(true,true,true,true)"
+
     @test real(quat(1.0)) == 1.0
     @test real(quat(1.0+2.0im)) == 1.0
     @test imag(quat(1.0+2.0im)) == 2.0
@@ -143,6 +151,8 @@ end
 
     @test qmatrix(cmatrix(1+2im+3jm+4km))[1,1] == 1+2im+3jm+4km
     @test qmatrix(cmatrix(Q)) == Q
+
+    @test quat(Q) == Q
 end
     
 # end

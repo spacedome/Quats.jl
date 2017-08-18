@@ -119,7 +119,7 @@ quat(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{T}
 
 vec(q::Quaternion) = vcat(q.re, q.im, q.jm, q.km) 
 
-function Base.show(io::IO, q::Quaternion)
+function show(io::IO, q::Quaternion)
     r, i, j, k = vec(q)
     compact = get(io, :compact, false)
     show(io, r)
@@ -133,7 +133,7 @@ function Base.show(io::IO, q::Quaternion)
     if !(isa(i,Integer) && !isa(i,Bool) || isa(i,AbstractFloat) && isfinite(i))
         print(io, "*")
     end
-    print(io, "im ")
+    print(io, "im")
     if signbit(j) && !isnan(j)
         j = -j
         print(io, compact ? "-" : " - ")
@@ -156,6 +156,18 @@ function Base.show(io::IO, q::Quaternion)
         print(io, "*")
     end
     print(io, "km")
+end
+
+function show(io::IO, q::Quaternion{Bool})
+    if q == im 
+        print(io, "im")
+    elseif q == jm 
+        print(io, "jm")
+    elseif q == km
+        print(io, "km")
+    else 
+        print(io, "Quaternion($(q.re),$(q.im),$(q.jm),$(q.km))")
+    end
 end
 
 function read(s::IO, ::Type{Quaternion{T}}) where T<:Real
