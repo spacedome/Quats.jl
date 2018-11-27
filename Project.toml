@@ -1,0 +1,7 @@
+name = "Quats"
+uuid = "1260d9b6-f282-11e8-30db-f3190f0af64b"
+authors = ["spacedome"]
+version = "0.1.0"
+
+[deps]
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

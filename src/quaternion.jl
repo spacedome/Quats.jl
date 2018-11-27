@@ -1,4 +1,6 @@
-importall Base
+import Random.AbstractRNG
+import Base: convert, promote_rule
+import Base: +, -, *, /, ^
 
 export Quaternion, quat, jm, km, Quaternion128, Quaternion256, Quat128, Quat256, jmag, kmag, cmatrix, qmatrix
 
@@ -18,7 +20,7 @@ end
 Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
 Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)) )
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
-Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4])
+# Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4]) # Doesn't seem like a good design, fix this
 
 """
     jm
