@@ -1,6 +1,7 @@
 import Random.AbstractRNG
 import Base: convert, promote_rule
-import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, isequal, vec, conj
+import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, isequal
+import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round
 import Base: +, -, *, /, ^, ==
 
 export Quaternion, quat, jm, km, Quaternion128, Quaternion256, Quat128, Quat256, jmag, kmag, cmatrix, qmatrix
@@ -124,7 +125,7 @@ quat(::Type{T}) where {T<:Real} = Quaternion{T}
 quat(::Type{Complex{T}}) where {T<:Real} = Quaternion{T}
 quat(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{T}
 
-vec(q::Quaternion) = vcat(q.re, q.im, q.jm, q.km) 
+vec(q::Quaternion) = vcat(q.re, q.im, q.jm, q.km)
 
 function show(io::IO, q::Quaternion)
     r, i, j, k = vec(q)
@@ -166,13 +167,13 @@ function show(io::IO, q::Quaternion)
 end
 
 function show(io::IO, q::Quaternion{Bool})
-    if q == im 
+    if q == im
         print(io, "im")
-    elseif q == jm 
+    elseif q == jm
         print(io, "jm")
     elseif q == km
         print(io, "km")
-    else 
+    else
         print(io, "Quaternion($(q.re),$(q.im),$(q.jm),$(q.km))")
     end
 end
@@ -199,7 +200,7 @@ isequal(q::Quaternion, w::Quaternion) = isequal(q.re,w.re) & isequal(q.im,w.im) 
 
 conj(q::Quaternion) = Quaternion(q.re,-q.im,-q.jm,-q.km)
 abs(q::Quaternion)  = vecnorm([q.re q.im q.jm q.km])
-abs2(q::Quaternion) = q.re*q.re + q.im*q.im + q.jm*q.jm + q.km*q.km 
+abs2(q::Quaternion) = q.re*q.re + q.im*q.im + q.jm*q.jm + q.km*q.km
 inv(q::Quaternion)  = conj(q)/abs2(q)
 inv(q::Quaternion{<:Integer}) = inv(float(q))
 
@@ -326,7 +327,7 @@ big(q::Quaternion{<:Integer}) = Quaternion{BigInt}(q)
 
 function cmatrix(q::Quaternion)
     [complex( q.re, q.im) complex(q.jm,  q.km);
-     complex(-q.jm, q.km) complex(q.re, -q.im)] 
+     complex(-q.jm, q.km) complex(q.re, -q.im)]
 end
 
 function cmatrix(Q::Matrix{Quaternion{T}}) where {T}
