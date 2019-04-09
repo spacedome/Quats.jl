@@ -4,7 +4,8 @@ import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, ise
 import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round
 import Base: +, -, *, /, ^, ==
 
-export Quaternion, quat, jm, km, Quaternion128, Quaternion256, Quat128, Quat256, jmag, kmag, cmatrix, qmatrix
+export Quaternion, quat, jm, km, jmag, kmag, cmatrix, qmatrix
+export QuaternionF16, QuaternionF32, QuaternionF64, QuatF16, QuatF32, QuatF64
 
 """
     Quaternion{T<:Real} <: Number
@@ -37,10 +38,12 @@ Quaternion imaginary unit.
 """
 const km = Quaternion(false,false,false,true)
 
-const Quaternion128 = Quaternion{Float32}
-const Quaternion256 = Quaternion{Float64}
-const Quat128 = Quaternion{Float32}
-const Quat256 = Quaternion{Float64}
+const QuaternionF16 = Quaternion{Float16}
+const QuaternionF32 = Quaternion{Float32}
+const QuaternionF64 = Quaternion{Float64}
+const QuatF16 = Quaternion{Float16}
+const QuatF32 = Quaternion{Float32}
+const QuatF64 = Quaternion{Float64}
 
 convert(::Type{Quaternion{T}}, x::Real) where {T<:Real} = Quaternion{T}(x,0,0,0)
 convert(::Type{Quaternion{T}}, z::Complex) where {T<:Real} = Quaternion{T}(real(z),imag(z),0,0)
