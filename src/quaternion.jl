@@ -45,7 +45,6 @@ const QuatF64 = Quaternion{Float64}
 
 convert(::Type{Quaternion{T}}, x::Real) where {T<:Real} = Quaternion{T}(x,0,0,0)
 convert(::Type{Quaternion{T}}, z::Complex) where {T<:Real} = Quaternion{T}(real(z),imag(z),0,0)
-
 convert(::Type{Quaternion{T}}, q::Quaternion) where {T<:Real} = Quaternion{T}(q.re, q.im, q.jm, q.km)
 
 convert(::Type{Quaternion}, q::Quaternion) = q
@@ -256,7 +255,7 @@ isequal(q::Quaternion, w::Quaternion) = isequal(q.re,w.re) & isequal(q.im,w.im) 
 #TODO: hash
 
 conj(q::Quaternion) = Quaternion(q.re,-q.im,-q.jm,-q.km)
-abs(q::Quaternion)  = vecnorm([q.re q.im q.jm q.km])
+abs(q::Quaternion)  = sqrt(abs2(q))
 abs2(q::Quaternion) = q.re*q.re + q.im*q.im + q.jm*q.jm + q.km*q.km
 inv(q::Quaternion)  = conj(q)/abs2(q)
 inv(q::Quaternion{<:Integer}) = inv(float(q))
@@ -376,8 +375,8 @@ end
 float(q::Quaternion{<:AbstractFloat}) = q
 float(q::Quaternion) = Quaternion(float(q.re), float(q.im), float(q.jm), float(q.km))
 
-big(q::Quaternion{<:AbstractFloat}) = Quaternion{BigFloat}(q)
-big(q::Quaternion{<:Integer}) = Quaternion{BigInt}(q)
+big(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{big(T)}
+big(z::Quaternion{T}) where {T<:Real} = Quaternion{big(T)}(z)
 
 
 ## Matrix representations of Quaternions

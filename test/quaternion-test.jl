@@ -1,21 +1,28 @@
 
 @testset "quat basic tests" begin
 
-    @testset "type conversion" for T in (Int32, Int64, Float32, Float64)
+    @testset "type conversion" for T in (Int32, Int64, Float32, Float64, BigFloat, BigInt)
         @test real(quat(T)) == T
         @test complex(quat(T)) == complex(T)
+        @test widen(Quaternion{T}) == Quaternion{widen(T)}
+        @test quat(Complex{T}) == Quaternion{T}
+        @test quat(Quaternion{T}) == Quaternion{T}
     end
 
-    # @test sprint(show, 1 + 2im + 3jm + 4km) == "1 + 2im + 3jm + 4km"
-    # @test sprint(showcompact, -1.0-2.0im-3.0jm-4.0km) == "-1.0-2.0im-3.0jm-4.0km"
-    # @test sprint(show, NaN + NaN*im + NaN*jm + NaN*km) == "NaN + NaN*im + NaN*jm + NaN*km"
-    # @test sprint(show, quat(im)) == "im"
-    # @test sprint(show, jm) == "jm"
-    # @test sprint(show, km) == "km"
-    # @test sprint(show, Quaternion(true,true,true,true)) == "Quaternion(true,true,true,true)"
+    @test promote_rule(QuatF16, Float32) == QuatF32
+    @test promote_rule(QuatF64, ComplexF32) == QuatF64
+    @test promote_rule(Quaternion{BigFloat}, QuatF64) == Quaternion{BigFloat}
+
+
 
     @test real(quat(1.0)) == 1.0
     @test real(quat(1.0+2.0im)) == 1.0
+    @test convert(Quaternion, 1.0) == quat(1.0)
+    @test convert(Quaternion, 1.0+2.0im) == quat(1.0+2.0im)
+    @test convert(Quaternion, 1+im+jm+km) == quat(1,1,1,1)
+    @test convert(Quaternion{Float32}, 1.0) == quat(1.0)
+    @test convert(Quaternion{Float32}, 1.0+2.0im) == quat(1.0+2.0im)
+    @test convert(Quaternion{Int32}, 1+im+jm+km) == quat(1,1,1,1)
     @test imag(quat(1.0+2.0im)) == 2.0
     @test jmag(1.0+2.0im+3.0jm+4.0km) == 3.0
     @test kmag(1.0+2.0im+3.0jm+4.0km) == 4.0
@@ -57,19 +64,23 @@
     @test quat(0.0,-1.0,0.0,0.0) == -im
     @test quat(0.0,0.0,-1.0,0.0) == -jm
     @test quat(0.0,0.0,0.0,-1.0) == -km
-    @test im*jm ==  km == -jm*im 
+    @test im*jm ==  km == -jm*im
     @test jm*im == -km == -im*jm
     @test jm*km ==  im == -km*jm
     @test km*jm == -im == -jm*km
     @test km*im ==  jm == -im*km
     @test im*km == -jm == -km*im
-    @test im*im == jm*jm == km*km == -1 
+    @test im*im == jm*jm == km*km == -1
 
+    @test quat(complex(1,2), complex(3,4)) == quat(1,2,3,4)
+    @test quat(quat(1,2,3,4)) == quat(1,2,3,4)
+    @test quat(jm) == jm
+    @test Quaternion(km) == km
 end
 
 # These mirror tests from Complex.jl
 @testset "arithmetic" begin
-    @testset for T in (Float16, Float32, Float64) # BigFloat was failing
+    @testset for T in (Float16, Float32, Float64, BigFloat) # BigFloat was failing
         t = true
         f = false
         u = quat(T(+1.0), T(+1.0), T(+1.0), T(+1.0))
@@ -127,7 +138,7 @@ end
             @test isequal(iq * iq, quat(T(-1.0),T(+0.0),T(+0.0),T(+0.0)))
             @test isequal(jq * jq, quat(T(-1.0),T(+0.0),T(+0.0),T(+0.0)))
             @test isequal(kq * kq, quat(T(-1.0),T(+0.0),T(+0.0),T(+0.0)))
-            @test iq*jq ==  kq == -jq*iq 
+            @test iq*jq ==  kq == -jq*iq
             @test jq*iq == -kq == -iq*jq
             @test jq*kq ==  iq == -kq*jq
             @test kq*jq == -iq == -jq*kq
@@ -137,16 +148,30 @@ end
 
         @testset "divide" begin
             @test u/T(+1.0) == u
+            @test u/quat(T(+1.0)) == u
+            @test T(+1.0)/u == 0.25conj(u)
         end
     end
 
 end
 
+@testset "printing" begin
+    @test sprint(show,  1 + 2im + 3jm + 4km) == "1 + 2im + 3jm + 4km"
+    @test sprint(show, -1 - 2im - 3jm - 4km) == "-1 - 2im - 3jm - 4km"
+    @test sprint(show,  1.0+2.0im+3.0jm+4.0km, context=:compact=>true) == "1.0+2.0im+3.0jm+4.0km"
+    @test sprint(show, -1.0-2.0im-3.0jm-4.0km, context=:compact=>true) == "-1.0-2.0im-3.0jm-4.0km"
+    @test sprint(show, NaN + NaN*im + NaN*jm + NaN*km) == "NaN + NaN*im + NaN*jm + NaN*km"
+    @test sprint(show, quat(im)) == "im"
+    @test sprint(show, jm) == "jm"
+    @test sprint(show, km) == "km"
+    @test sprint(show, Quaternion(true,true,true,true)) == "Quaternion(true,true,true,true)"
+end
+
 # @testset "exp(q)" begin
-    
+
 
 # @testset "Matrix tests" begin
-    
+
 #     Q = [1+2im+3jm+4jm -im+km; -jm+km -5+6im-7jm-8km]
 
 #     @test qmatrix(cmatrix(1+2im+3jm+4km))[1,1] == 1+2im+3jm+4km
@@ -154,5 +179,19 @@ end
 
 #     @test quat(Q) == Q
 # end
-    
+
 # end
+
+@testset "math" begin
+
+    @test abs(quat(1,1,1,1)) == 2.0
+    @test abs(quat(-1.0,2.0,-3.0,4.0)) == sqrt(1+4+9+16)
+    @test abs2(quat(1,1,1,1)) == 4
+    @test abs2(quat(-1.0,2.0,-3.0,4.0)) == 1.0+4.0+9.0+16.0
+
+    @test inv(quat(1.0,0,0,0)) == quat(1.0,0,0,0)
+    @test inv(quat(1,0,0,0)) == quat(1.0,0,0,0)
+    @test inv(quat(0,1,0,0)) == quat(-1.0im)
+    @test inv(jm) == -1.0jm
+    @test inv(4km) == -0.25km
+end

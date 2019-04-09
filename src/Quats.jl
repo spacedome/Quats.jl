@@ -4,8 +4,8 @@ module Quats
 
 import Random.AbstractRNG
 import Base: convert, promote_rule, show
-import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, isequal, zero
-import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round
+import Base: real, complex, float, imag, isinteger, isfinite, isnan, isinf, iszero, isequal, zero
+import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round, sqrt
 import Base: +, -, *, /, ^, ==
 
 export Quaternion
