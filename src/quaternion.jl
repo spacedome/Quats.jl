@@ -1,11 +1,4 @@
-import Random.AbstractRNG
-import Base: convert, promote_rule, show
-import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, isequal
-import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round
-import Base: +, -, *, /, ^, ==
-
-export Quaternion, quat, jm, km, jmag, kmag, cmatrix, qmatrix
-export QuaternionF16, QuaternionF32, QuaternionF64, QuatF16, QuatF32, QuatF64
+### Quaternion type heavily based off of Base lib Complex.jl
 
 """
     Quaternion{T<:Real} <: Number
@@ -20,13 +13,17 @@ struct Quaternion{T<:Real} <: Number
     km::T
 end
 
+### Constructors
 Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
-Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)))
-Quaternion(z1::Complex, z2::Complex) = Quaternion(real(z1), imag(z1), real(z2), imag(z2))
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
-Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4]) # Doesn't seem like a good design, fix this
-
+Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)))
 Quaternion(q::Quaternion) = q
+
+### For representation as q = z + c*j for complex z and c
+Quaternion(z1::Complex, z2::Complex) = Quaternion(real(z1), imag(z1), real(z2), imag(z2))
+
+# Doesn't seem like a good design, fix this ?
+Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4])
 
 """
     jm
@@ -67,6 +64,7 @@ promote_rule(::Type{Quaternion{T}}, ::Type{Quaternion{S}}) where {T<:Real,S<:Rea
 widen(::Type{Quaternion{T}}) where {T} = Quaternion{widen(T)}
 
 
+### Redefine/overload methods for Complex
 real(q::Quaternion) = q.re
 imag(q::Quaternion) = q.im
 
@@ -100,15 +98,18 @@ isinf(q::Quaternion) = isinf(q.re) | isinf(q.im) | isinf(q.jm) | isinf(q.km)
 iszero(q::Quaternion) = iszero(q.re) && iszero(q.im) && iszero(q.jm) && iszero(q.km)
 iscomplex(q::Quaternion) = iszero(q.jm) && iszero(q.km)
 
+zero(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{T}(zero(T), zero(T), zero(T), zero(T))
+
 """
     quat(r, [i], [j], [k])
 Convert real numbers or arrays to quaternion. `i`, `j`, `k`, default to zero.
+Essentially just a more convienient way to call the constructor Quaternion(...).
 """
-quat(q::Quaternion) = q
+quat(a::Real, b::Real, c::Real, d::Real) = Quaternion(a, b, c, d)
 quat(x::Real) = Quaternion(x)
 quat(z::Complex) = Quaternion(z)
+quat(q::Quaternion) = q
 quat(z1::Complex, z2::Complex) = Quaternion(z1, z2)
-quat(a::Real, b::Real, c::Real, d::Real) = Quaternion(a, b, c, d)
 quat(v::Vector{<:Real}) = Quaternion(v)
 
 complex(::Type{Quaternion{T}}) where {T<:Real} = Complex{T}
@@ -178,6 +179,57 @@ function show(io::IO, q::Quaternion{Bool})
         print(io, "jm")
     elseif q == km
         print(io, "km")
+    else
+        print(io, "Quaternion($(q.re),$(q.im),$(q.jm),$(q.km))")
+    end
+end
+
+function show(io::IO, ::MIME"text/html", q::Quaternion)
+    r, i, j, k = vec(q)
+    compact = get(io, :compact, false)
+    show(io, r)
+    if signbit(i) && !isnan(i)
+        i = -i
+        print(io, compact ? "-" : " - ")
+    else
+        print(io, compact ? "+" : " + ")
+    end
+    show(io, i)
+    if !(isa(i,Integer) && !isa(i,Bool) || isa(i,AbstractFloat) && isfinite(i))
+        print(io, "*")
+    end
+    print(io, "<b><i>i</i></b>")
+    if signbit(j) && !isnan(j)
+        j = -j
+        print(io, compact ? "-" : " - ")
+    else
+        print(io, compact ? "+" : " + ")
+    end
+    show(io, j)
+    if !(isa(j,Integer) && !isa(j,Bool) || isa(j,AbstractFloat) && isfinite(j))
+        print(io, "*")
+    end
+    print(io, "<b><i>j</i></b>")
+    if signbit(k) && !isnan(k)
+        k = -k
+        print(io, compact ? "-" : " - ")
+    else
+        print(io, compact ? "+" : " + ")
+    end
+    show(io, k)
+    if !(isa(k,Integer) && !isa(k,Bool) || isa(k,AbstractFloat) && isfinite(k))
+        print(io, "*")
+    end
+    print(io, "<b><i>k</i></b>")
+end
+
+function show(io::IO, ::MIME"text/html", q::Quaternion{Bool})
+    if q == im
+        print(io, "<b><i>i</i></b>")
+    elseif q == jm
+        print(io, "<b><i>j</i></b>")
+    elseif q == km
+        print(io, "<b><i>k</i></b>")
     else
         print(io, "Quaternion($(q.re),$(q.im),$(q.jm),$(q.km))")
     end
