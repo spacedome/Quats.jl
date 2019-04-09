@@ -336,19 +336,18 @@ function cmatrix(q::Quaternion)
 end
 
 function cmatrix(Q::Matrix{Quaternion{T}}) where {T}
-    W = zeros(Complex{T}, 2 .* size(Q))
-    for i=1:size(Q, 1), j=1:size(Q, 2)
-        W[2i-1:2i, 2j-1:2j] = cmatrix(Q[i, j])
-    end
+    n, m = size(Q)
+    W = zeros(Complex{T}, (2n, 2m))
+    W[1:n, 1:m]       = complex.( real.(Q),  imag.(Q))
+    W[n+1:2n, 1:m]    = complex.(-jmag.(Q),  kmag.(Q))
+    W[1:n, m+1:2m]    = complex.( jmag.(Q),  kmag.(Q))
+    W[n+1:2n, m+1:2m] = complex.( real.(Q), -imag.(Q))
     W
 end
 
 function qmatrix(C::Matrix{Complex{T}}) where {T}
-    Q = zeros(Quaternion{T}, Integer.(size(C)./2))
-    for i=1:size(Q, 1), j=1:size(Q, 2)
-        Q[i,j] = real(C[2i-1, 2j-1]) + imag(C[2i-1, 2j-1])*im + real(C[2i-1, 2j])*jm + imag(C[2i-1, 2j])*km
-    end
-    Q
+    n, m = size(C)
+    quat.(C[1:n÷2, 1:m÷2], C[1:n÷2, m÷2+1:m])
 end
 
 ## Array operations on complex numbers ##
