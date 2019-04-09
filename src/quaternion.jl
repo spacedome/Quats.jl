@@ -1,5 +1,5 @@
 import Random.AbstractRNG
-import Base: convert, promote_rule
+import Base: convert, promote_rule, show
 import Base: real, complex, imag, isinteger, isfinite, isnan, isinf, iszero, isequal
 import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round
 import Base: +, -, *, /, ^, ==
@@ -21,7 +21,8 @@ struct Quaternion{T<:Real} <: Number
 end
 
 Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
-Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)) )
+Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)))
+Quaternion(z1::Complex, z2::Complex) = Quaternion(real(z1), imag(z1), real(z2), imag(z2))
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
 Quaternion(v::Vector{<:Real}) = Quaternion(v[1], v[2], v[3], v[4]) # Doesn't seem like a good design, fix this
 
@@ -106,6 +107,7 @@ Convert real numbers or arrays to quaternion. `i`, `j`, `k`, default to zero.
 quat(q::Quaternion) = q
 quat(x::Real) = Quaternion(x)
 quat(z::Complex) = Quaternion(z)
+quat(z1::Complex, z2::Complex) = Quaternion(z1, z2)
 quat(a::Real, b::Real, c::Real, d::Real) = Quaternion(a, b, c, d)
 quat(v::Vector{<:Real}) = Quaternion(v)
 
