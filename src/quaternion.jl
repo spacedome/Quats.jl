@@ -18,6 +18,8 @@ Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
 Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)))
 Quaternion(q::Quaternion) = q
+### need this one for BigInt/BigFloat convert
+Quaternion{T}(q::Quaternion) where {T <: Real} = Quaternion(T(q.re), T(q.im), T(q.jm), T(q.jm))
 
 ### For representation as q = z + c*j for complex z and c
 Quaternion(z1::Complex, z2::Complex) = Quaternion(real(z1), imag(z1), real(z2), imag(z2))
@@ -304,12 +306,12 @@ function -(x::Real, q::Quaternion{Bool})
 end
 -(q::Quaternion{Bool}, x::Real) = Quaternion(q.re - x, q.im, q.jm, q.km)
 *(x::Real, q::Quaternion{Bool}) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
-*(q::Quaternion{Bool}, x::Real) = Quaternion(real(z) * x, imag(z) * x, q.jm * x, q.km * x)
+*(q::Quaternion{Bool}, x::Real) = Quaternion(q.re * x, q.im * x, q.jm * x, q.km * x)
 
 +(x::Real, q::Quaternion) = Quaternion(x + q.re, q.im, q.jm, q.km)
-+(q::Quaternion, x::Real) = Quaternion(x + q.re, q.im, q.jm, q.km)
++(q::Quaternion, x::Real) = Quaternion(q.re + x, q.im, q.jm, q.km)
 +(z::Complex, q::Quaternion) = Quaternion(real(z) + q.re, imag(z) + q.im, q.jm, q.km)
-+(q::Quaternion, z::Complex) = Quaternion(real(z) + q.re, imag(z) + q.im, q.jm, q.km)
++(q::Quaternion, z::Complex) = Quaternion(q.re + real(z), q.im + imag(z), q.jm, q.km)
 function -(x::Real, q::Quaternion)
     # we don't want the default type for -(Bool)
     re = x - q.re
@@ -323,7 +325,7 @@ end
 -(q::Quaternion, x::Real) = Quaternion(q.re - x, q.im, q.jm, q.km)
 -(q::Quaternion, z::Complex) = Quaternion(q.re - real(z), q.im - imag(z), q.jm, q.km)
 *(x::Real, q::Quaternion) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
-*(q::Quaternion, x::Real) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
+*(q::Quaternion, x::Real) = Quaternion(q.re * x, q.im * x, q.jm * x, q.km * x)
 
 *(q::Quaternion, z::Complex) = Quaternion(q.re*z.re - q.im*z.im, q.re*z.im + q.im*z.re,
                                                       q.jm*z.re + q.km*z.im, q.km*z.re - q.jm*z.im)
@@ -334,49 +336,59 @@ end
 /(q::Quaternion, x::Real) = Quaternion(q.re/x, q.im/x, q.jm/x, q.km/x)
 /(q::Quaternion, w::Quaternion) = q * inv(w)
 
-rand(r::AbstractRNG, ::Type{Quaternion{T}}) where {T<:Real} = Quaternion(rand(r,T), rand(r,T), rand(r,T), rand(r,T))
-randn(r::AbstractRNG, ::Type{Quaternion{T}}) where {T<:Real} = Quaternion(randn(r,T), randn(r,T), randn(r,T), randn(r,T))
 
-normalize(q::Quaternion{T}) where {T<:Real} = Quaternion(normalize(vec(q)))
+rand(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:Real} =
+    Quaternion(rand(r,T), rand(r,T), rand(r,T), rand(r,T))
+### randn in complex divides by sqrt(1/2) to make 2d uniform, should this be added here?
+randn(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:AbstractFloat} =
+    Quaternion(randn(r,T), randn(r,T), randn(r,T), randn(r,T))
+
+norm(q::Quaternion{T}, p::Real=2) where {T<:Real} = norm(vec(q), p)
+normalize(q::Quaternion{T}, p::Real=2) where {T<:Real} = Quaternion(normalize(vec(q), p))
 
 exp(q::Quaternion{<:Integer}) = exp(float(q))
 log(q::Quaternion{<:Integer}) = log(float(q))
 
+
+### See Neil Dantam - Quaternion Computation - for exp and log
 function exp(q::Quaternion{<:AbstractFloat})
-    V = vecnorm([q.im q.jm q.km])
-    exp(q.re)*(cos(V) + quat(zero(q.re), q.im/V, q.jm/V, q.km/V)*sin(V))
+    V = norm([q.im q.jm q.km])
+    s = if V < 1e-8
+        1 - V*V/6 + V*V*V*V/120
+    else
+        sin(V)/V
+    end
+    exp(q.re)*(cos(V) + quat(zero(q.re), q.im*s, q.jm*s, q.km*s))
 end
 
 function log(q::Quaternion{<:AbstractFloat})
-    V = vecnorm([q.im q.jm q.km])
+    V = norm([q.im q.jm q.km])
     Q = abs(q)
-    log(Q) + quat(zero(q.re), q.im/V, q.jm/V, q.km/V)*acos(q.re/Q)
+    ϕ = atan(V, q.re)
+    s = if V < 1e-8
+        (1+ϕ*ϕ/6 +7*ϕ*ϕ*ϕ*ϕ/360)/Q
+    else
+        ϕ/V
+    end
+    quat(log(Q), q.im*s, q.jm*s, q.km*s)
 end
 
+### NOTE: sqrt(q^2) == q is NOT true for pure quaternion for this computation
 sqrt(q::Quaternion) = exp(0.5*log(q))
 ^(q::Quaternion, w::Quaternion) = exp(w*log(q))
 
-function round(q::Quaternion{<:AbstractFloat}, ::RoundingMode{MR}, ::RoundingMode{MI}) where {MR,MI}
-    Quaternion(round(q.re, RoundingMode{MR}()),
-               round(q.im, RoundingMode{MI}()),
-               round(q.jm, RoundingMode{MI}()),
-               round(q.km, RoundingMode{MI}()))
-end
-
-round(q::Quaternion) = Quaternion(round(q.re), round(q.im), round(q.jm), round(q.km))
-
-function round(q::Quaternion, digits::Integer, base::Integer=10)
-    Complex(round(q.re, digits, base),
-            round(q.im, digits, base),
-            round(q.jm, digits, base),
-            round(q.km, digits, base))
+function round(q::Quaternion, rr::RoundingMode=RoundNearest, ri::RoundingMode=rr; kwargs...)
+    Quaternion(round(real(q), rr; kwargs...),
+               round(imag(q), ri; kwargs...),
+               round(jmag(q), ri; kwargs...),
+               round(kmag(q), ri; kwargs...))
 end
 
 float(q::Quaternion{<:AbstractFloat}) = q
 float(q::Quaternion) = Quaternion(float(q.re), float(q.im), float(q.jm), float(q.km))
 
 big(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{big(T)}
-big(z::Quaternion{T}) where {T<:Real} = Quaternion{big(T)}(z)
+big(q::Quaternion{T}) where {T<:Real} = Quaternion{big(T)}(q)
 
 
 ## Matrix representations of Quaternions
@@ -404,6 +416,3 @@ end
 ## Array operations on complex numbers ##
 
 quat(A::AbstractArray{<:Quaternion}) = A
-
-
-_default_type(T::Type{Quaternion}) = Quaternion{Float}
