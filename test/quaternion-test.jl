@@ -85,6 +85,9 @@
     @test jm + im == quat(false, true, true, false)
     @test im + km == quat(false, true, false, true)
 
+    @test complex(true, true) - quat(true, true, false, false) == 0
+    @test quat(true, true, false, false) - complex(true, true) == 0
+
     @test true + quat(0.0,1.0,1.0,1.0) == quat(1.0, 1.0, 1.0, 1.0)
     @test quat(0.0,1.0,1.0,1.0) + true == quat(1.0, 1.0, 1.0, 1.0)
     @test true - quat(0.0,1.0,1.0,1.0) == conj(quat(1.0, 1.0, 1.0, 1.0))
@@ -93,6 +96,10 @@
     @test jm + 1.0 == quat(1.0, 0.0, 1.0, 0.0)
     @test 1.0 - jm == quat(1.0, 0.0, -1.0, 0.0)
     @test jm - 1.0 == quat(-1.0, 0.0, 1.0, 0.0)
+    @test jm * 1.0 == quat(0.0, 0.0, 1.0, 0.0)
+    @test 1.0 * jm == quat(0.0, 0.0, 1.0, 0.0)
+
+    @test 1.0 - quat(0.0, -1.0, -1.0, -1.0) == quat(1.0, 1.0, 1.0, 1.0)
 
     q, c, r = rand(QuatF64), rand(ComplexF64), rand(Float64)
     @test q * true == q
@@ -215,6 +222,25 @@ end
     @test sprint(show, jm) == "jm"
     @test sprint(show, km) == "km"
     @test sprint(show, Quaternion(true,true,true,true)) == "Quaternion(true,true,true,true)"
+
+    @test sprint(show, "text/html",  1 + 2im + 3jm + 4km) == "1 + 2<b><i>i</i></b> + 3<b><i>j</i></b> + 4<b><i>k</i></b>"
+    @test sprint(show, "text/html", -1 - 2im - 3jm - 4km) == "-1 - 2<b><i>i</i></b> - 3<b><i>j</i></b> - 4<b><i>k</i></b>"
+    @test sprint(show, "text/html",  1.0+2.0im+3.0jm+4.0km, context=:compact=>true) == "1.0+2.0<b><i>i</i></b>+3.0<b><i>j</i></b>+4.0<b><i>k</i></b>"
+    @test sprint(show, "text/html", -1.0-2.0im-3.0jm-4.0km, context=:compact=>true) == "-1.0-2.0<b><i>i</i></b>-3.0<b><i>j</i></b>-4.0<b><i>k</i></b>"
+    @test sprint(show, "text/html", NaN + NaN*im + NaN*jm + NaN*km) == "NaN + NaN*<b><i>i</i></b> + NaN*<b><i>j</i></b> + NaN*<b><i>k</i></b>"
+    @test sprint(show, "text/html", quat(im)) == "<b><i>i</i></b>"
+    @test sprint(show, "text/html", jm) == "<b><i>j</i></b>"
+    @test sprint(show, "text/html", km) == "<b><i>k</i></b>"
+    @test sprint(show, "text/html", Quaternion(true,true,true,true)) == "Quaternion(true,true,true,true)"
+
+    @testset "io" begin
+        mktemp() do path, file
+            q = quat(1,2,3,4)
+            @test write(file, quat(1,2,3,4)) > 0
+            seekstart(file)
+            @test read(file, typeof(q)) == q
+        end
+    end
 end
 
 
@@ -229,7 +255,7 @@ end
     @test cmatrix([1 im; jm km]) == [1 im 0 0; 0 0 1 im; 0 0 1 (-im); (-1) im 0 0]
 
     for i=1:10
-        Q = rand(QuatF64, 2, 2)
+        Q = randn(QuatF64, 2, 2)
         @test qmatrix(cmatrix(Q)) == Q
     end
 
@@ -260,6 +286,7 @@ end
     @test exp(log(quat(1,1,1,1))) ≈ quat(1.0, 1.0, 1.0, 1.0)
     @test sqrt(quat(1.0)) ≈ quat(1.0)
     @test sqrt(quat(-1.0)) ≈ quat(1.0)
+    @test quat(im)^2.0 ≈ quat(jm)^2.0 ≈ quat(km)^2.0 ≈ quat(-1)
 
     for u in [1, im, jm, km]
         @test exp(log(quat(u))) ≈ quat(u)
@@ -275,6 +302,6 @@ end
         @test exp(quat(q.re, q.im, 0, 0)) ≈ exp(complex(q.re, q.im))
         @test log(quat(q.re, q.im, 0, 0)) ≈ log(complex(q.re, q.im))
         # @test sqrt(q^2) ≈ q
-        @test sqrt(q)^2 ≈ q
+        @test sqrt(q)^2.0 ≈ q
     end
 end

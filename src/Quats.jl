@@ -4,7 +4,7 @@ module Quats
 
 import Random: AbstractRNG, SamplerType
 import LinearAlgebra: norm, normalize
-import Base: convert, promote_rule, show
+import Base: convert, promote_rule, show, write, read
 import Base: real, complex, float, imag, isinteger, isfinite, isnan, isinf, iszero, isequal, zero
 import Base: vec, conj, abs, abs2, inv, big, widen, rand, randn, exp, log, round, sqrt
 import Base: +, -, *, /, ^, ==

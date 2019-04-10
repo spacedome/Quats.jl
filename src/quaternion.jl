@@ -236,7 +236,7 @@ function show(io::IO, ::MIME"text/html", q::Quaternion{Bool})
     end
 end
 
-function read(s::IO, ::Type{Quaternion{T}}) where T<:Real
+function read(s::IO, ::Type{Quaternion{T}}) where {T}
     r = read(s,T)
     i = read(s,T)
     j = read(s,T)
@@ -340,7 +340,7 @@ end
 rand(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:Real} =
     Quaternion(rand(r,T), rand(r,T), rand(r,T), rand(r,T))
 ### randn in complex divides by sqrt(1/2) to make 2d uniform, should this be added here?
-randn(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:AbstractFloat} =
+randn(r::AbstractRNG, ::Type{Quaternion{T}}) where {T<:AbstractFloat} =
     Quaternion(randn(r,T), randn(r,T), randn(r,T), randn(r,T))
 
 norm(q::Quaternion{T}, p::Real=2) where {T<:Real} = norm(vec(q), p)
