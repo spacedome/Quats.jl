@@ -64,6 +64,9 @@ promote_rule(::Type{Quaternion{T}}, ::Type{Quaternion{S}}) where {T<:Real,S<:Rea
 
 widen(::Type{Quaternion{T}}) where {T} = Quaternion{widen(T)}
 
+bswap(q::Quaternion) = Quaternion(bswap(q.re), bswap(q.im), bswap(q.jm), bswap(q.km))
+
+in(q::Quaternion, r::AbstractRange{<:Real}) = isreal(q) && real(q) in r
 
 ### Redefine/overload methods for Complex
 real(q::Quaternion) = q.re
@@ -94,10 +97,11 @@ real(::Type{Quaternion{T}}) where {T<:Real} = T
 isreal(q::Quaternion) = iszero(q.im) && iszero(q.jm) && iszero(q.km)
 isinteger(q::Quaternion) = isreal(q) && isinteger(q.re)
 isfinite(q::Quaternion) = isfinite(q.re) && isfinite(q.im) && isfinite(q.jm) && isfinite(q.km)
-isnan(q::Quaternion) = isnan(q.re) | isnan(q.im) | isnan(q.jm) | isnan(q.km)
-isinf(q::Quaternion) = isinf(q.re) | isinf(q.im) | isinf(q.jm) | isinf(q.km)
+isnan(q::Quaternion) = isnan(q.re) || isnan(q.im) || isnan(q.jm) || isnan(q.km)
+isinf(q::Quaternion) = isinf(q.re) || isinf(q.im) || isinf(q.jm) || isinf(q.km)
 iszero(q::Quaternion) = iszero(q.re) && iszero(q.im) && iszero(q.jm) && iszero(q.km)
 iscomplex(q::Quaternion) = iszero(q.jm) && iszero(q.km)
+isone(q::Quaternion) = isreal(q) && isone(q.re)
 
 zero(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{T}(zero(T), zero(T), zero(T), zero(T))
 
@@ -232,41 +236,6 @@ inv(q::Quaternion{<:Integer}) = inv(float(q))
                                              q.re*w.jm - q.im*w.km + q.jm*w.re + q.km*w.im,
                                              q.re*w.km + q.im*w.jm - q.jm*w.im + q.km*w.re)
 
-
-# Why all this Bool code? (copied from complex.jl)
-+(x::Bool, q::Quaternion{Bool}) = Quaternion(x + q.re, q.im, q.jm, q.km)
-+(q::Quaternion{Bool}, x::Bool) = Quaternion(q.re + x, q.im, q.jm, q.km)
--(x::Bool, q::Quaternion{Bool}) = Quaternion(x - q.re, - q.im, - q.jm, - q.km)
--(q::Quaternion{Bool}, x::Bool) = Quaternion(q.re - x, q.im, q.jm, q.km)
-*(x::Bool, q::Quaternion{Bool}) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
-*(q::Quaternion{Bool}, x::Bool) = Quaternion(q.re * x, q.im * x, q.jm * x, q.km * x)
-
-+(z::Complex{Bool}, q::Quaternion{Bool}) = Quaternion(z.re + q.re, z.im + q.im, q.jm, q.km)
-+(q::Quaternion{Bool}, z::Complex{Bool}) = Quaternion(q.re + z.re, q.im + z.im, q.jm, q.km)
--(z::Complex{Bool}, q::Quaternion{Bool}) = Quaternion(z.re - q.re, z.im - q.im, - q.jm, - q.km)
--(q::Quaternion{Bool}, z::Complex{Bool}) = Quaternion(q.re - z.re, q.im - z.im, q.jm, q.km)
-*(q::Quaternion{Bool}, z::Complex{Bool}) = Quaternion(q.re*z.re - q.im*z.im, q.re*z.im + q.im*z.re,
-                                                      q.jm*z.re + q.km*z.im, q.km*z.re - q.jm*z.im)
-*(z::Complex{Bool}, q::Quaternion{Bool}) = Quaternion(z.re*q.re - z.im*q.im, z.re*q.im + z.im*q.re,
-                                                      z.re*q.jm - z.im*q.km, z.re*q.km + z.im*q.jm)
-
-+(x::Bool, q::Quaternion) = Quaternion(x + q.re, q.im, q.jm, q.km)
-+(q::Quaternion, x::Bool) = Quaternion(q.re + x, q.im, q.jm, q.km)
--(x::Bool, q::Quaternion) = Quaternion(x - q.re, - q.im, - q.jm, - q.km)
--(q::Quaternion, x::Bool) = Quaternion(q.re - x, q.im, q.jm, q.km)
-*(x::Bool, q::Quaternion) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
-*(q::Quaternion, x::Bool) = Quaternion(q.re * x, q.im * x, q.jm * x, q.km * x)
-
-+(x::Real, q::Quaternion{Bool}) = Quaternion(x + q.re, q.im, q.jm, q.km)
-+(q::Quaternion{Bool}, x::Real) = Quaternion(q.re + x, q.im, q.jm, q.km)
-function -(x::Real, q::Quaternion{Bool})
-    # we don't want the default type for -(Bool)
-    re = x-q.re
-    Quaternion(re, - oftype(re, q.im), - oftype(re, q.jm), - oftype(re, q.km))
-end
--(q::Quaternion{Bool}, x::Real) = Quaternion(q.re - x, q.im, q.jm, q.km)
-*(x::Real, q::Quaternion{Bool}) = Quaternion(x * q.re, x * q.im, x * q.jm, x * q.km)
-*(q::Quaternion{Bool}, x::Real) = Quaternion(q.re * x, q.im * x, q.jm * x, q.km * x)
 
 +(x::Real, q::Quaternion) = Quaternion(x + q.re, q.im, q.jm, q.km)
 +(q::Quaternion, x::Real) = Quaternion(q.re + x, q.im, q.jm, q.km)

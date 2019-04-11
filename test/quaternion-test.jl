@@ -18,6 +18,7 @@
     @test big(quat(1,1,1,1)) == quat(big(1), big(1), big(1), big(1))
 
 
+
     @test real(quat(1.0)) == 1.0
     @test real(quat(1.0+2.0im)) == 1.0
     @test convert(Quaternion, 1.0) == quat(1.0)
@@ -116,7 +117,7 @@
 
 
 
-
+    @test bswap(quat(1,1,1,1)) == quat(bswap(1), bswap(1), bswap(1), bswap(1))
 
     @test quat(complex(1,2), complex(3,4)) == quat(1,2,3,4)
     @test quat(quat(1,2,3,4)) == quat(1,2,3,4)
