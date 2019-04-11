@@ -3,7 +3,7 @@
 """
     Quaternion{T<:Real} <: Number
 Quaternion number type with real and imaginary parts of type `T`.
-`Quaternion256` and `Quaternion128` are aliases for
+`QuatF64` and `QuatF32` or `QuaternionF64` and `QuaternionF32` are aliases for
 `Quaternion{Float64}` and `Quaternion{Float32}` respectively.
 """
 struct Quaternion{T<:Real} <: Number
@@ -73,6 +73,7 @@ imag(q::Quaternion) = q.im
 """
     jmag(q)
 Return the j-imaginary part of the quaternion number `q`.
+# Example
 ```jldoctest
 julia> jmag(1 + 3im + 2jm + 5km)
 2
@@ -83,6 +84,7 @@ jmag(q::Quaternion) = q.jm
 """
     kmag(q)
 Return the k-imaginary part of the quaternion number `q`.
+# Example
 ```jldoctest
 julia> kmag(1 + 3im + 2jm + 5km)
 5
@@ -104,9 +106,12 @@ isone(q::Quaternion) = isreal(q) && isone(q.re)
 zero(::Type{Quaternion{T}}) where {T<:Real} = Quaternion{T}(zero(T), zero(T), zero(T), zero(T))
 
 """
-    quat(r, [i], [j], [k])
+    quat(r::Real [, i::Real, j::Real, k::Real])
+    quat(c::Complex [, z::Complex])
 Convert real numbers or arrays to quaternion. `i`, `j`, `k`, default to zero.
-Essentially just a more convienient way to call the constructor Quaternion(...).
+Convert a complex number to a quaternion, with `j` and `k` parts zero.
+Convert a pair of complex numbers to a quaternion `c + z*j`.
+Mostly just a more convienient way to call the constructor Quaternion(...).
 """
 quat(a::Real, b::Real, c::Real, d::Real) = Quaternion(a, b, c, d)
 quat(x::Real) = Quaternion(x)
@@ -115,6 +120,11 @@ quat(q::Quaternion) = q
 quat(z1::Complex, z2::Complex) = Quaternion(z1, z2)
 quat(v::Vector{<:Real}) = Quaternion(v)
 
+
+"""
+    complex(q::Quaternion)
+Returns the complex part of a quaternion, equivalent to `complex(q.re, q.im)`.
+"""
 complex(::Type{Quaternion{T}}) where {T<:Real} = Complex{T}
 complex(q::Quaternion) = complex(q.re, q.im)
 
@@ -123,12 +133,6 @@ complex(q::Quaternion) = complex(q.re, q.im)
     quat(T::Type)
 Returns an appropriate type which can represent a value of type `T` as a quaternion.
 Equivalent to `typeof(quat(zero(T)))`.
-```jldoctest
-julia> quat(Quaternion{Int})
-Quaternion{Int64}
-julia> quat(Int)
-Quaternion{Int64}
-```
 """
 quat(::Type{T}) where {T<:Real} = Quaternion{T}
 quat(::Type{Complex{T}}) where {T<:Real} = Quaternion{T}
@@ -218,9 +222,25 @@ isequal(q::Quaternion, w::Quaternion) = isequal(q.re,w.re) & isequal(q.im,w.im) 
 
 #TODO: hash
 
+"""
+    conj(q::Quaternion)
+Compute the complex conjugate of a quaternion `z`.
+"""
 conj(q::Quaternion) = Quaternion(q.re,-q.im,-q.jm,-q.km)
+
+"""
+    abs(q::Quaternion)
+Compute the absolute value (euclidean norm) of a quaternion.
+"""
 abs(q::Quaternion)  = sqrt(abs2(q))
+
+"""
+    abs2(q::Quaternion)
+Compute the squared euclidean norm of a quaternion.
+Equivalent to `q * conj(q)` but computationally faster and returns a real.
+"""
 abs2(q::Quaternion) = q.re*q.re + q.im*q.im + q.jm*q.jm + q.km*q.km
+
 inv(q::Quaternion)  = conj(q)/abs2(q)
 inv(q::Quaternion{<:Integer}) = inv(float(q))
 
@@ -266,6 +286,7 @@ end
 
 rand(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:Real} =
     Quaternion(rand(r,T), rand(r,T), rand(r,T), rand(r,T))
+
 """
 When the type argument is quaternion, the values are drawn
 from the circularly symmetric quaternion normal distribution.
@@ -274,7 +295,17 @@ This is std normal in each component but with variance scaled by 1/4.
 randn(r::AbstractRNG, ::Type{Quaternion{T}}) where {T<:AbstractFloat} =
     Quaternion(T(0.5)*randn(r,T), T(0.5)*randn(r,T), T(0.5)*randn(r,T), T(0.5)*randn(r,T))
 
+"""
+    norm(q::Quaternion, p::Real=2)
+Computes the `p` norm of the quaternion components of `q` as a vector.
+For the default `p=2` euclidean norm, this is same as the quaternion `abs()`.
+"""
 norm(q::Quaternion{T}, p::Real=2) where {T<:Real} = norm(vec(q), p)
+
+"""
+    normalize(q::Quaternion, p::Real=2)
+Computes the normalized unit quaternion. Optional choice of `p` norm.
+"""
 normalize(q::Quaternion{T}, p::Real=2) where {T<:Real} = Quaternion(normalize(vec(q), p))
 
 exp(q::Quaternion{<:Integer}) = exp(float(q))
@@ -324,6 +355,14 @@ big(q::Quaternion{T}) where {T<:Real} = Quaternion{big(T)}(q)
 
 ## Matrix representations of Quaternions
 
+"""
+    cmatrix(q::Quaternion)
+    cmatrix(q::Matrix{Quaternion})
+Returns the complex matrix representation of a quaternion.
+If we write `q = x + y*j` then this is `[x y; -conj(y) conj(x)]`.
+This works if `q` is a quaternion of matrix of quaternions.
+For a matrix of size `(n,m)` this gives a complex matrix of size `(2n, 2m)`.
+"""
 function cmatrix(q::Quaternion)
     [complex( q.re, q.im) complex(q.jm,  q.km);
      complex(-q.jm, q.km) complex(q.re, -q.im)]
@@ -334,6 +373,13 @@ function cmatrix(Q::Matrix{Quaternion{T}}) where {T}
      complex.(-jmag.(Q),  kmag.(Q)) complex.( real.(Q), -imag.(Q))]
 end
 
+"""
+    qmatrix(c::Matrix{Complex})
+Given a complex matrix representation of a quaternion of quaternion matrix,
+returns the quaternion representation of the matrix of size `(n÷2, m÷2)`.
+This gives an inverse of the `cmatrix` function.
+This function does no error checking, make sure your matrix is valid beforehand.
+"""
 function qmatrix(C::Matrix{Complex{T}}) where {T}
     n, m = size(C)
     quat.(C[1:n÷2, 1:m÷2], C[1:n÷2, m÷2+1:m])
