@@ -90,15 +90,15 @@ it is possible to represent a quaternion as a complex or real matrix, though the
 (Similarly a complex number has a real matrix representation).
 For a quaternion `q = x + yj` where `x,y` complex we can represent it as the complex matrix:
 ```julia
-Q = [ x , y ;
-     -y', x']
+Q = [ x  y ;
+     -y' x']
 ```
 This representation preserves the algebraic structure of the quaternions (it is a homomorphism).
 This representation can be computed with `cmatrix`, above we would have `Q == cmatrix(q)`.
 We can do the same for a quaternion matrix to a complex matrix `Q = X + Yj`.
 ```julia
-Q = [       X ,       Y ;
-     -conj.(X), conj.(Y)]
+Q = [       X        Y ;
+     -conj.(X) conj.(Y)]
 ```
 This is also a homomorphism and preserves the algebraic structure of the quaternion matrices, as well as in a very useful sense preserving the most important spectral properties.
 To convert back to quaternion from a complex matrix use `qmatrix`.
