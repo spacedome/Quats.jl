@@ -7,7 +7,7 @@ import LinearAlgebra: norm, normalize
 import Base: convert, promote_rule, show, write, read
 import Base: real, imag, complex
 import Base: float, big, widen, bswap
-import Base: isinteger, isfinite, isnan, isinf, iszero, isequal, isone, zero, in
+import Base: isinteger, isfinite, isnan, isinf, iszero, isequal, isone, zero
 import Base: vec, conj, abs, abs2, inv, rand, randn, exp, log, round, sqrt
 import Base: +, -, *, /, ^, ==
 

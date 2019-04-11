@@ -1,9 +1,9 @@
-# Quats
+# Quats.jl
 
 [![Build Status](https://travis-ci.org/spacedome/Quats.jl.svg?branch=master)](https://travis-ci.org/spacedome/Quats.jl)
-
+&nbsp;
 [![Coverage Status](https://coveralls.io/repos/spacedome/Quats.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/spacedome/Quats.jl?branch=master)
-
+&nbsp;
 [![codecov.io](http://codecov.io/github/spacedome/Quats.jl/coverage.svg?branch=master)](http://codecov.io/github/spacedome/Quats.jl?branch=master)
 
 A Quaternion type for Julia.
@@ -74,14 +74,13 @@ normalize(quat(2,2,2,2)) == 0.5 + 0.5im + 0.5jm + 0.5km
 
 Using `rand` and `randn` one can generate random quaternions or arrays of random matrices.
 With `rand` each component of the quaternion is uniformly sampled from [0,1) for floats (by default).
-With `randn` each component is sampled independently from a standard normal.
-They should be scaled to make the whole quaternion sampled from 4D normal (TODO).
+With `randn` each component is sampled independently from a standard normal and scaled by `sqrt(1/4)` to make the whole quaternion a circularly-symmetric standard normal.
 
 
-The typical Boolean functions are defined `isreal, iszero, isinteger, isfinite, isnan, isinf, iszero, iscomplex, isequal, ==` and should behave as expected.
+The typical Boolean functions are defined `isreal, iszero, isone, isinteger, isfinite, isnan, isinf, iszero, iscomplex, isequal, ==` and should behave as expected.
 The `isapprox` or `≈` uses the generic definition which only depends on the absolute value (euclidean distance) of the two quaternions being compared `abs(q-w)`.
 
-The following type and conversion functions are implemented `zero, float, big, widen, round, vec`.
+The following type and conversion functions are implemented `zero, float, big, widen, round, bswap, vec`.
 The `vec` function just returns a vector of four real numbers, the components of the quaternion it is called on.
 As for complex numbers, you can optionally specify a second rounding mode for the imaginary components, by default they are the same as for the real component.
 

@@ -66,8 +66,6 @@ widen(::Type{Quaternion{T}}) where {T} = Quaternion{widen(T)}
 
 bswap(q::Quaternion) = Quaternion(bswap(q.re), bswap(q.im), bswap(q.jm), bswap(q.km))
 
-in(q::Quaternion, r::AbstractRange{<:Real}) = isreal(q) && real(q) in r
-
 ### Redefine/overload methods for Complex
 real(q::Quaternion) = q.re
 imag(q::Quaternion) = q.im
@@ -268,9 +266,13 @@ end
 
 rand(r::AbstractRNG, ::SamplerType{Quaternion{T}}) where {T<:Real} =
     Quaternion(rand(r,T), rand(r,T), rand(r,T), rand(r,T))
-### randn in complex divides by sqrt(1/2) to make 2d uniform, should this be added here?
+"""
+When the type argument is quaternion, the values are drawn
+from the circularly symmetric quaternion normal distribution.
+This is std normal in each component but with variance scaled by 1/4.
+"""
 randn(r::AbstractRNG, ::Type{Quaternion{T}}) where {T<:AbstractFloat} =
-    Quaternion(randn(r,T), randn(r,T), randn(r,T), randn(r,T))
+    Quaternion(T(0.5)*randn(r,T), T(0.5)*randn(r,T), T(0.5)*randn(r,T), T(0.5)*randn(r,T))
 
 norm(q::Quaternion{T}, p::Real=2) where {T<:Real} = norm(vec(q), p)
 normalize(q::Quaternion{T}, p::Real=2) where {T<:Real} = Quaternion(normalize(vec(q), p))

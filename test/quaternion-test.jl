@@ -115,7 +115,9 @@
     @test complex(1, 1) * quat(1, 1, 1, 1) == quat(0, 2, 0, 2)
     @test quat(1, 1, 1, 1) * complex(1, 1) == quat(0, 2, 2, 0)
 
-
+    @test isone(quat(1,0,0,0))
+    @test isone(quat(1.0))
+    @test !isone(jm)
 
     @test bswap(quat(1,1,1,1)) == quat(bswap(1), bswap(1), bswap(1), bswap(1))
 
