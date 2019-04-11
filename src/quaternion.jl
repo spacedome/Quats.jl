@@ -138,39 +138,19 @@ function show(io::IO, q::Quaternion)
     r, i, j, k = vec(q)
     compact = get(io, :compact, false)
     show(io, r)
-    if signbit(i) && !isnan(i)
-        i = -i
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
+    for (x, xm) in [(i, "im"), (j, "jm"), (k, "km")]
+        if signbit(x) && !isnan(x)
+            x = -x
+            print(io, compact ? "-" : " - ")
+        else
+            print(io, compact ? "+" : " + ")
+        end
+        show(io, x)
+        if !(isa(x,Integer) && !isa(x,Bool) || isa(x,AbstractFloat) && isfinite(x))
+            print(io, "*")
+        end
+        print(io, xm)
     end
-    show(io, i)
-    if !(isa(i,Integer) && !isa(i,Bool) || isa(i,AbstractFloat) && isfinite(i))
-        print(io, "*")
-    end
-    print(io, "im")
-    if signbit(j) && !isnan(j)
-        j = -j
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
-    end
-    show(io, j)
-    if !(isa(j,Integer) && !isa(j,Bool) || isa(j,AbstractFloat) && isfinite(j))
-        print(io, "*")
-    end
-    print(io, "jm")
-    if signbit(k) && !isnan(k)
-        k = -k
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
-    end
-    show(io, k)
-    if !(isa(k,Integer) && !isa(k,Bool) || isa(k,AbstractFloat) && isfinite(k))
-        print(io, "*")
-    end
-    print(io, "km")
 end
 
 function show(io::IO, q::Quaternion{Bool})
@@ -189,39 +169,19 @@ function show(io::IO, ::MIME"text/html", q::Quaternion)
     r, i, j, k = vec(q)
     compact = get(io, :compact, false)
     show(io, r)
-    if signbit(i) && !isnan(i)
-        i = -i
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
+    for (x, xm) in [(i, "i"), (j, "j"), (k, "k")]
+        if signbit(x) && !isnan(x)
+            x = -x
+            print(io, compact ? "-" : " - ")
+        else
+            print(io, compact ? "+" : " + ")
+        end
+        show(io, x)
+        if !(isa(x,Integer) && !isa(x,Bool) || isa(x,AbstractFloat) && isfinite(x))
+            print(io, "*")
+        end
+        print(io, "<b><i>" * xm * "</i></b>")
     end
-    show(io, i)
-    if !(isa(i,Integer) && !isa(i,Bool) || isa(i,AbstractFloat) && isfinite(i))
-        print(io, "*")
-    end
-    print(io, "<b><i>i</i></b>")
-    if signbit(j) && !isnan(j)
-        j = -j
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
-    end
-    show(io, j)
-    if !(isa(j,Integer) && !isa(j,Bool) || isa(j,AbstractFloat) && isfinite(j))
-        print(io, "*")
-    end
-    print(io, "<b><i>j</i></b>")
-    if signbit(k) && !isnan(k)
-        k = -k
-        print(io, compact ? "-" : " - ")
-    else
-        print(io, compact ? "+" : " + ")
-    end
-    show(io, k)
-    if !(isa(k,Integer) && !isa(k,Bool) || isa(k,AbstractFloat) && isfinite(k))
-        print(io, "*")
-    end
-    print(io, "<b><i>k</i></b>")
 end
 
 function show(io::IO, ::MIME"text/html", q::Quaternion{Bool})
@@ -399,13 +359,8 @@ function cmatrix(q::Quaternion)
 end
 
 function cmatrix(Q::Matrix{Quaternion{T}}) where {T}
-    n, m = size(Q)
-    W = zeros(Complex{T}, (2n, 2m))
-    W[1:n, 1:m]       = complex.( real.(Q),  imag.(Q))
-    W[n+1:2n, 1:m]    = complex.(-jmag.(Q),  kmag.(Q))
-    W[1:n, m+1:2m]    = complex.( jmag.(Q),  kmag.(Q))
-    W[n+1:2n, m+1:2m] = complex.( real.(Q), -imag.(Q))
-    W
+    [complex.( real.(Q),  imag.(Q)) complex.( jmag.(Q),  kmag.(Q));
+     complex.(-jmag.(Q),  kmag.(Q)) complex.( real.(Q), -imag.(Q))]
 end
 
 function qmatrix(C::Matrix{Complex{T}}) where {T}
