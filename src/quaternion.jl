@@ -18,8 +18,10 @@ Quaternion(a::Real, b::Real, c::Real, d::Real) = Quaternion(promote(a,b,c,d)...)
 Quaternion(x::Real) = Quaternion(x, zero(x), zero(x), zero(x))
 Quaternion(z::Complex) = Quaternion(real(z), imag(z), zero(real(z)), zero(real(z)))
 Quaternion(q::Quaternion) = q
-### need this one for BigInt/BigFloat convert
-Quaternion{T}(q::Quaternion) where {T <: Real} = Quaternion(T(q.re), T(q.im), T(q.jm), T(q.jm))
+
+(::Type{Quaternion{T}})(x::Real) where {T} = Quaternion{T}(x, 0, 0, 0)
+(::Type{Quaternion{T}})(z::Complex) where {T} = Quaternion{T}(z.re, z.im, 0, 0)
+(::Type{Quaternion{T}})(q::Quaternion) where {T} = Quaternion{T}(q.re, q.im, q.jm, q.km)
 
 ### For representation as q = z + c*j for complex z and c
 Quaternion(z1::Complex, z2::Complex) = Quaternion(real(z1), imag(z1), real(z2), imag(z2))
@@ -48,10 +50,6 @@ const QuatF64 = Quaternion{Float64}
 convert(::Type{Quaternion{T}}, x::Real) where {T<:Real} = Quaternion{T}(x,0,0,0)
 convert(::Type{Quaternion{T}}, z::Complex) where {T<:Real} = Quaternion{T}(real(z),imag(z),0,0)
 convert(::Type{Quaternion{T}}, q::Quaternion) where {T<:Real} = Quaternion{T}(q.re, q.im, q.jm, q.km)
-
-convert(::Type{Quaternion}, q::Quaternion) = q
-convert(::Type{Quaternion}, z::Complex) = Quaternion(z)
-convert(::Type{Quaternion}, x::Real) = Quaternion(x)
 
 
 promote_rule(::Type{Quaternion{T}}, ::Type{S}) where {T<:Real,S<:Real} =
